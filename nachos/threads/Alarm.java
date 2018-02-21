@@ -61,7 +61,7 @@ public class Alarm {
 	KThread.sleep();
 	Machine.interrupt().restore(status);
 
-}
+   }
     private class WaitList implements Comparable<WaitList>{ //helper object containing wake times and threads.
     	KThread thread;
     	long finish;
@@ -81,5 +81,21 @@ public class Alarm {
 
     }
 
-public PriorityQueue<WaitList> waitQueue = new PriorityQueue<WaitList>();//Priority queue to store and sort threads
+   public PriorityQueue<WaitList> waitQueue = new PriorityQueue<WaitList>();//Priority queue to store and sort threads
+   private static boolean test = false;
+   public static void selfTest(){
+	long start = Machine.timer().getTime();   	
+	new Alarm().waitUntil(1000);
+	long finish = Machine.timer().getTime();
+	Lib.assertTrue(finish - start >= 1000);//basic test to check that it waits
+	
+	KThread temp = new KThread(new Runnable(){public void run(){new Alarm().waitUntil(1000); test = false;}}).setName("Bool");
+	KThread temp1 = new KThread(new Runnable(){public void run(){new Alarm().waitUntil(10); test = true;}}).setName("Bool");
+	temp.fork();
+	temp1.fork();
+	temp1.join();
+	Lib.assertTrue(test); //will only be true if temp1 finishes before temp, checks that priorityqueue sorts correctly
+	temp.join();
+
+   }
 }
