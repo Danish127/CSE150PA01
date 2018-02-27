@@ -183,7 +183,6 @@ public class KThread {
      */
     public static void finish() {
 	Lib.debug(dbgThread, "Finishing thread: " + currentThread.toString());
-	
 	Machine.interrupt().disable();
 
 	Machine.autoGrader().finishingCurrentThread();
@@ -192,8 +191,13 @@ public class KThread {
 	toBeDestroyed = currentThread;
 
 
+
 	currentThread.status = statusFinished;
-	
+	if(currentThread.joinQueue != null){
+        	KThread thread = currentThread.joinQueue.nextThread();
+        	if(thread != null)
+            		thread.ready();
+	}
 	sleep();
     }
 
@@ -241,6 +245,7 @@ public class KThread {
     public static void sleep() {
 	Lib.debug(dbgThread, "Sleeping thread: " + currentThread.toString());
 	
+	
 	Lib.assertTrue(Machine.interrupt().disabled());
 
 	if (currentThread.status != statusFinished)
@@ -255,6 +260,7 @@ public class KThread {
      */
     public void ready() {
 	Lib.debug(dbgThread, "Ready thread: " + toString());
+	
 	
 	Lib.assertTrue(Machine.interrupt().disabled());
 	Lib.assertTrue(status != statusReady);
@@ -276,6 +282,19 @@ public class KThread {
 	Lib.debug(dbgThread, "Joining to thread: " + toString());
 
 	Lib.assertTrue(this != currentThread);
+
+	boolean status =Machine.interrupt().disable();
+    	if (joinQueue == null) // if no waiting threads
+        	joinQueue = ThreadedKernel.scheduler.newThreadQueue(true); //instantiate joinQueue
+    	if(this.status != statusFinished){//check if thread has finished operation.
+		joinQueue.acquire(this); // get the thread to join
+        	joinQueue.waitForAccess(currentThread);
+        	currentThread.sleep();//sleep currentThread
+                
+		
+    	}
+	Machine.interrupt().restore(status);
+
 
     }
 
@@ -397,14 +416,23 @@ public class KThread {
 	private int which;
     }
 
+
     /**
      * Tests whether this module is working.
      */
+    private static boolean test = false;
     public static void selfTest() {
 	Lib.debug(dbgThread, "Enter KThread.selfTest");
-	
 	new KThread(new PingTest(1)).setName("forked thread").fork();
 	new PingTest(0).run();
+	KThread temp = new KThread(new Runnable(){public void run(){new Alarm().waitUntil(1000); test = true;}}).setName("Bool");
+	KThread temp1 = new KThread(new Runnable(){public void run(){}}).setName("Bool");
+	temp.fork();
+	temp1.fork();
+	temp.join();
+	Lib.assertTrue(test);
+	temp1.join();
+	
     }
 
     private static final char dbgThread = 't';
@@ -440,6 +468,7 @@ public class KThread {
     /** Number of times the KThread constructor was called. */
     private static int numCreated = 0;
 
+    private ThreadQueue joinQueue = null;
     private static ThreadQueue readyQueue = null;
     private static KThread currentThread = null;
     private static KThread toBeDestroyed = null;
