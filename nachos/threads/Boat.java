@@ -5,6 +5,13 @@ public class Boat
 {
     static BoatGrader bg;
     
+	static int O_counter;
+	static int O_child;
+	static int M_child;
+	static int O_adult;
+	static int M_adult;
+	static boolean O_boat;
+    
     public static void selfTest()
     {
 	BoatGrader b = new BoatGrader();
@@ -26,11 +33,45 @@ public class Boat
 	bg = b;
 
 	// Instantiate global variables here
+	O_counter = children + adults;
+	O_child = children;
+	M_child = 0;
+	O_adult = adults;
+	M_adult = 0;
+	O_boat = true;
 	
 	// Create threads here. See section 3.4 of the Nachos for Java
 	// Walkthrough linked from the projects page.
 
-	Runnable r = new Runnable() {
+	for(int i = 0; i < children; i++)
+	{
+		Runnable r = new Runnable()
+        {
+			public void run()
+			{
+				ChildItinerary();
+			}
+        };
+        KThread c = new KThread(r);
+        c.setName("child" + i + "thread");
+        c.fork();
+	}
+	
+	for(int j = 0; j < adults; j++)
+	{
+		Runnable r = new Runnable()
+        {
+			public void run()
+			{
+				AdultItinerary();
+			}
+        };
+        KThread a = new KThread(r);
+        a.setName("adult" + j + "thread");
+        a.fork();
+	}
+	
+	/*Runnable r = new Runnable() {
 	    public void run() {
                 SampleItinerary();
             }
@@ -38,7 +79,7 @@ public class Boat
         KThread t = new KThread(r);
         t.setName("Sample Boat Thread");
         t.fork();
-
+*/
     }
 
     static void AdultItinerary()
@@ -52,13 +93,41 @@ public class Boat
 	       bg.AdultRowToMolokai();
 	   indicates that an adult has rowed the boat across to Molokai
 	*/
+	while (O_child > 1)
+	{
+		//adult.sleep;
+	}
+	while (O_child == 1 && O_boat == true)
+	{
+		bg.AdultRowToMolokai();
+		O_adult--;
+		M_adult++;
+	}
+	
     }
 
     static void ChildItinerary()
     {
 	bg.initializeChild(); //Required for autograder interface. Must be the first thing called.
-	//DO NOT PUT ANYTHING ABOVE THIS LINE. 
+	//DO NOT PUT ANYTHING ABOVE THIS LINE.     
+	
+	while (O_child != 1 && O_boat == true)
+    {
+		bg.ChildRowToMolokai();
+		bg.ChildRideToMolokai();
+		bg.ChildRowToOahu();
+		O_child--;
+		M_child++;
     }
+	while (M_child != 0 && M_adult >= 1 && O_boat == false)
+	{
+		bg.ChildRowToOahu();
+		O_child++;
+		M_child--;
+	}
+	
+    }
+
 
     static void SampleItinerary()
     {

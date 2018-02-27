@@ -33,9 +33,18 @@ public class Condition2 {
     public void sleep() {
 	Lib.assertTrue(conditionLock.isHeldByCurrentThread());
 
-	conditionLock.release();
+	//conditionLock.release();
 
-	conditionLock.acquire();
+	//conditionLock.acquire();
+	
+		boolean tmp = Machine.interrupt().disable(); //disable interrupts
+		KThread currentThread = KThread.currentThread(); //get the current thread
+		waitQueue.waitForAccess(currentThread); //wait until current thread is accessible
+		conditionLock.release(); //release the condition lock (acting as a semaphore 	release)
+		KThread.sleep(); //put the thread to bed
+		conditionLock.acquire(); //reacquire the condition lock
+		Machine.interrupt().restore(tmp);	//restore interrupts
+
     }
 
     /**
@@ -44,6 +53,15 @@ public class Condition2 {
      */
     public void wake() {
 	Lib.assertTrue(conditionLock.isHeldByCurrentThread());
+	KThread tmpThread = waitQueue.nextThread();
+	boolean tmp;
+	if (tmpThread != null){ //if the queue contains threads
+		tmp = Machine.interrupt().disable(); //disable interrupts
+		//KThread queued = waitQueue.nextThread(); //get thread from queue
+		tmpThread.ready(); //ready the thread 
+		Machine.interrupt().restore(tmp); //restore interrupts
+	}
+
     }
 
     /**
@@ -52,7 +70,21 @@ public class Condition2 {
      */
     public void wakeAll() {
 	Lib.assertTrue(conditionLock.isHeldByCurrentThread());
+	KThread tmpThread = waitQueue.nextThread();
+	boolean tmp;
+	while (tmpThread != null){
+	//while(!waitQueue.isEmpty()){ //while queue is not empty
+		tmp = Machine.interrupt().disable(); //disable interrupts
+		//KThread queued = waitQueue.nextThread(); //get thread from queue
+		tmpThread.ready(); //ready the thread 
+		Machine.interrupt().restore(tmp); //restore interrupts
+		tmpThread = waitQueue.nextThread();
+		
+	}
+
     }
 
     private Lock conditionLock;
+    
+    private ThreadQueue waitQueue = ThreadedKernel.scheduler.newThreadQueue(false);
 }

@@ -206,8 +206,51 @@ public class PriorityScheduler extends Scheduler {
 	 */
 	public int getEffectivePriority() {
 	    // implement me
-	    return priority;
+	    //return priority;
+		return getEffectivePriority(new Hashset<ThreadState>());
 	}
+
+
+	private int getEffectivePriority(Hashset<ThreadState> set){
+		if(effectivePriority != expiredEffectivePriority){
+			return effectivePriority;
+		}
+		if(set.contains(this)){
+			Systems.err.println("Deadlock");		//prints to the standard error
+			return priority;
+
+		} 
+
+		effectivePriority = priority;				//state effectivePriority
+		for(PriorityQueue queue : donationQueue)
+			if(queue.transferPriority)
+				for(KThread thread : queue.waitQueue){
+					set.add(this);
+					int pri = getThreadState(thread).getEffectivePriority(set);
+					set.remove(this);
+					if(pri > effectivePriority)
+						effectivePriority = pri;
+				}
+				PriorityQueue queue = (PriorityQueue) thread.waitForJoin;
+				if (queue.transferPriority)
+				for (KThread thread : queue.waitQueue) {
+					set.add(this);
+					int pri = getThreadState(thread).getEffectivePriority(set);
+					set.remove(this);
+					if (pri > effectivePriority)
+						effectivePriority = pri;
+				}
+
+			return effectivePriority;
+		
+
+
+
+
+
+	}
+
+
 
 	/**
 	 * Set the priority of the associated thread to the specified value.
@@ -221,6 +264,10 @@ public class PriorityScheduler extends Scheduler {
 	    this.priority = priority;
 	    
 	    // implement me
+		//effectivePriority = expiredEffectivePriority;
+		//getEffectivePriority();
+		//lockHolder
+		//waitForAccess
 	}
 
 	/**
