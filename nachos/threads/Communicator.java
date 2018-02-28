@@ -34,6 +34,7 @@ while (message == null) {
     speaker.wake();
     listener.sleep();
 }
+
 //this thread hears the message and there is one fewer listener
 int receivedMessage = message.intValue();
 message = null;
@@ -69,8 +70,9 @@ Listener(Communicator com, String name) {
 
 public void run() {
     //two things to hear
-    for (int i = 0; i < 2; i++) {
+    for (int i = 0,1,2,3; i < 2; i++) {
 int heard = com.listen();
+Lib.assertTrue(heard == expected);
 System.out.println(name + " hears " + heard);
     }
     System.out.println(name + " is done");
@@ -81,6 +83,7 @@ private String name;
     }
 
     public static void selfTest() {
+System.out.println("Start Comm. test");
 Communicator com1 = new Communicator();
 KThread thread1 = new KThread(new Speaker(com1, "Test 1"));
 KThread thread2 = new KThread(new Listener(com1, "Test 2"));
@@ -90,11 +93,13 @@ thread2.fork();
 thread3.fork();
 //once main test is done then the other test get cut off because it is the main thread which is done
 new Listener(com1, "main test").run();
+
+System.out.println("End Comm. test");
     }
 
     private Integer message = null;
     private int listening = 0;
     private Lock comLock = new Lock();
-    private Condition2 listener = new Condition2(comLock);
-    private Condition2 speaker = new Condition2(comLock);
+    private Condition listener = new Condition(comLock);
+    private Condition speaker = new Condition(comLock);
 }
