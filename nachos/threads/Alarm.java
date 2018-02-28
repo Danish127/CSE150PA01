@@ -29,11 +29,11 @@ public class Alarm {
      */
     public void timerInterrupt() {
 
-	boolean status = Machine.interrupt().disable();
-   	while(!waitQueue.isEmpty() && waitQueue.peek().finish < Machine.timer().getTime())
-            waitQueue.poll().getThread().ready();
+	boolean status = Machine.interrupt().disable(); //making operation atomic "unsplittable"
+   	while(!waitQueue.isEmpty() && waitQueue.peek().finish < Machine.timer().getTime()) //waking all ready threads
+            waitQueue.poll().getThread().ready(); 
 
-    	Machine.interrupt().restore(status);
+    	Machine.interrupt().restore(status);//restore status
 
     }
 
@@ -52,14 +52,13 @@ public class Alarm {
      * @see	nachos.machine.Timer#getTime()
      */
     public void waitUntil(long x) {
-	// for now, cheat just to get something working (busy waiting is bad)
-	long finish = Machine.timer().getTime() + x;
+	long finish = Machine.timer().getTime() + x; //set time to wake 
 	KThread temp = KThread.currentThread();
-	boolean status = Machine.interrupt().disable();
-	WaitList wait = new WaitList(temp,finish); 
-	waitQueue.add(wait);
-	KThread.sleep();
-	Machine.interrupt().restore(status);
+	boolean status = Machine.interrupt().disable(); //making operation atomic "unsplittable"
+	WaitList wait = new WaitList(temp,finish); //create object to store thread to wait and wake time
+	waitQueue.add(wait); //add thread to wait to waitQueue
+	KThread.sleep(); //sleep thread
+	Machine.interrupt().restore(status); //restore status
 
    }
     private class WaitList implements Comparable<WaitList>{ //helper object containing wake times and threads.
@@ -68,15 +67,15 @@ public class Alarm {
 
 	public WaitList(KThread t, long f){thread = t; finish = f;}
 
-    	public int compareTo(WaitList temp){
-        	if(finish < temp.finish)
+    	public int compareTo(WaitList temp){ //implementing comparator, prioritize members with a smaller wake time
+        	if(finish < temp.finish) 
             		return -1;
         	else if (finish > temp.finish)
             		return 1;
         	else 
             		return 0;
 
-    	}public long finishTime(){return finish;}
+    	}public long finishTime(){return finish;} //functions to access member variables
     	public KThread getThread(){return thread;}
 
     }
@@ -90,7 +89,7 @@ public class Alarm {
 	Lib.assertTrue(finish - start >= 1000);//basic test to check that it waits
 	
 	KThread temp = new KThread(new Runnable(){public void run(){new Alarm().waitUntil(1000); test = false;}}).setName("Bool");
-	KThread temp1 = new KThread(new Runnable(){public void run(){new Alarm().waitUntil(10); test = true;}}).setName("Bool");
+	KThread temp1 = new KThread(new Runnable(){public void run(){new Alarm().waitUntil(10); test = true;}}).setName("Bool");//testing whether threads are prioritized by finish time
 	temp.fork();
 	temp1.fork();
 	temp1.join();
