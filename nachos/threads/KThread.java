@@ -193,10 +193,10 @@ public class KThread {
 
 
 	currentThread.status = statusFinished;
-	if(currentThread.joinQueue != null){
-        	KThread thread = currentThread.joinQueue.nextThread();
+	if(currentThread.joinQueue != null){//if joinQueue still has threads
+        	KThread thread = currentThread.joinQueue.nextThread();//get next thread
         	if(thread != null)
-            		thread.ready();
+            		thread.ready();//ready next thread
 	}
 	sleep();
     }
@@ -425,7 +425,7 @@ public class KThread {
 	Lib.debug(dbgThread, "Enter KThread.selfTest");
 	new KThread(new PingTest(1)).setName("forked thread").fork();
 	new PingTest(0).run();
-	KThread temp = new KThread(new Runnable(){public void run(){new Alarm().waitUntil(1000); test = true;}}).setName("Bool");
+	KThread temp = new KThread(new Runnable(){public void run(){new Alarm().waitUntil(1000); test = true;}}).setName("Bool"); 
 	KThread temp1 = new KThread(new Runnable(){public void run(){}}).setName("Bool");
 	temp.fork();
 	temp1.fork();
@@ -468,7 +468,7 @@ public class KThread {
     /** Number of times the KThread constructor was called. */
     private static int numCreated = 0;
 
-    private ThreadQueue joinQueue = null;
+    private ThreadQueue joinQueue = null; //join queue to hold joining threads
     private static ThreadQueue readyQueue = null;
     private static KThread currentThread = null;
     private static KThread toBeDestroyed = null;
