@@ -53,14 +53,16 @@ public class Condition2 {
      */
     public void wake() {
 	Lib.assertTrue(conditionLock.isHeldByCurrentThread());
+	boolean temp = Machine.interrupt().disable();
 	KThread tmpThread = waitQueue.nextThread();
-	boolean tmp;
+	//boolean tmp;
 	if (tmpThread != null){ //if the queue contains threads
-		tmp = Machine.interrupt().disable(); //disable interrupts
+		//tmp = Machine.interrupt().disable(); //disable interrupts
 		//KThread queued = waitQueue.nextThread(); //get thread from queue
 		tmpThread.ready(); //ready the thread 
-		Machine.interrupt().restore(tmp); //restore interrupts
+
 	}
+	Machine.interrupt().restore(temp); //restore interrupts
 
     }
 
@@ -70,17 +72,19 @@ public class Condition2 {
      */
     public void wakeAll() {
 	Lib.assertTrue(conditionLock.isHeldByCurrentThread());
+	boolean tmp = Machine.interrupt().disable();
 	KThread tmpThread = waitQueue.nextThread();
-	boolean tmp;
+	
 	while (tmpThread != null){
 	//while(!waitQueue.isEmpty()){ //while queue is not empty
-		tmp = Machine.interrupt().disable(); //disable interrupts
+		//tmp =  //disable interrupts
 		//KThread queued = waitQueue.nextThread(); //get thread from queue
 		tmpThread.ready(); //ready the thread 
-		Machine.interrupt().restore(tmp); //restore interrupts
+		
 		tmpThread = waitQueue.nextThread();
 		
 	}
+	Machine.interrupt().restore(tmp); //restore interrupts
 
     }
 
